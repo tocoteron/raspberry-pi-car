@@ -5,21 +5,24 @@ import cv2
 import time
 import configparser
 
+def get_server_ip():
+    return [(s.connect(('8.8.8.8', 80)), s.getsockname()[0], s.close()) for s in [socket.socket(socket.AF_INET, socket.SOCK_DGRAM)]][0][1]
+
 config = configparser.ConfigParser()
 config.read('./connection.ini', 'UTF-8')
 
 # 全体の設定
-FPS = 12
+FPS = 30
 INDENT = '    '
 
 # カメラ設定
 CAMERA_ID = 0
-CAMERA_FPS = 12
+CAMERA_FPS = 30
 CAMERA_WIDTH = 1280
 CAMERA_HEIGHT = 720
 
 # サーバ設定
-SERVER_IP = '127.0.0.1'
+SERVER_IP = get_server_ip()
 SERVER_PORT = int(config.get('server', 'port'))
 
 # パケット設定
@@ -32,6 +35,7 @@ IMAGE_QUALITY = 30
 
 # カメラ設定適用
 cam = cv2.VideoCapture(CAMERA_ID)
+cam.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'));
 cam.set(cv2.CAP_PROP_FPS, CAMERA_FPS)
 cam.set(cv2.CAP_PROP_FRAME_WIDTH, CAMERA_WIDTH)
 cam.set(cv2.CAP_PROP_FRAME_HEIGHT, CAMERA_HEIGHT)
@@ -39,9 +43,16 @@ cam.set(cv2.CAP_PROP_FRAME_HEIGHT, CAMERA_HEIGHT)
 # カメラ情報表示
 print('Camera {')
 print(INDENT + 'ID    : {},'.format(CAMERA_ID))
+print(INDENT + 'FORMAT: {},'.format(cam.get(cv2.CAP_PROP_FOURCC)))
 print(INDENT + 'FPS   : {},'.format(cam.get(cv2.CAP_PROP_FPS)))
 print(INDENT + 'WIDTH : {},'.format(cam.get(cv2.CAP_PROP_FRAME_WIDTH)))
 print(INDENT + 'HEIGHT: {}'.format(cam.get(cv2.CAP_PROP_FRAME_HEIGHT)))
+print('}')
+
+# サーバ情報表示
+print('Server {')
+print(INDENT + 'IP   : {},'.format(SERVER_IP))
+print(INDENT + 'PORT : {}'.format(SERVER_PORT))
 print('}')
 
 # クライアントに接続
@@ -49,11 +60,6 @@ s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind((SERVER_IP, SERVER_PORT))
 s.listen(1)
 soc, addr = s.accept()
-
-print('Server {')
-print(INDENT + 'IP   : {},'.format(SERVER_IP))
-print(INDENT + 'PORT : {}'.format(SERVER_PORT))
-print('}')
 
 # クライアント情報表示
 print('Client {')
