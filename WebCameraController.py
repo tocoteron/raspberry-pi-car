@@ -84,16 +84,3 @@ class WebCameraController(threading.Thread):
             time.sleep(max(0, 1 / FPS - (time.time() - loop_start_time)))
 
         s.close()
-
-def get_server_ip():
-    return [(s.connect(('8.8.8.8', 80)), s.getsockname()[0], s.close()) for s in [socket.socket(socket.AF_INET, socket.SOCK_DGRAM)]][0][1]
-
-def main():
-    config = configparser.ConfigParser()
-    config.read('./connection.ini', 'UTF-8')
-    web_camera_controller = WebCameraController(0, 30, 1280, 720, get_server_ip(), int(config.get('server', 'port')), int(config.get('packet', 'header_size')), int(config.get('packet', 'image_width')), int(config.get('packet', 'image_height')), 30)
-    web_camera_controller.start()
-    web_camera_controller.join()
-
-if __name__ == '__main__':
-    main()

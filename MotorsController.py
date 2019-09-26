@@ -54,25 +54,3 @@ class MotorsController:
     def change_motors_status(self, direction, speed):
         self.left_motor.change_status(direction, speed)
         self.right_motor.change_status(direction, speed)
-
-def main():
-    motors_controller = MotorsController(21, 20, 23, 24, 1000)
-
-    motors_controller.change_motor_status(MotorSelection.LEFT_MOTOR, MotorRotationDirection.FORWARD, 0.0)
-    motors_controller.change_motor_status(MotorSelection.RIGHT_MOTOR, MotorRotationDirection.FORWARD, 1.0)
-    time.sleep(3)
-
-    motors_controller.change_motor_status(MotorSelection.LEFT_MOTOR, MotorRotationDirection.FORWARD, 0.0)
-    motors_controller.change_motor_status(MotorSelection.RIGHT_MOTOR, MotorRotationDirection.BACKWARD, 0.7)
-    time.sleep(3)
-
-    motors_controller.change_motor_status(MotorSelection.LEFT_MOTOR, MotorRotationDirection.FORWARD, 1.0)
-    motors_controller.change_motor_status(MotorSelection.RIGHT_MOTOR, MotorRotationDirection.FORWARD, 0.0)
-    time.sleep(3)
-
-    motors_controller.change_motor_status(MotorSelection.LEFT_MOTOR, MotorRotationDirection.BACKWARD, 0.7)
-    motors_controller.change_motor_status(MotorSelection.RIGHT_MOTOR, MotorRotationDirection.FORWARD, 0.0)
-    time.sleep(3)
-
-if __name__ == '__main__':
-    main()
