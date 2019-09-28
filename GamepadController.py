@@ -4,10 +4,11 @@ import threading
 import MotorsController
 
 class GamepadController(threading.Thread):
-    def __init__(self, server_ip, server_port):
+    def __init__(self, left_motor_forward_pin, left_motor_backward_pin, right_motor_forward_pin, right_motor_backward_pin, motors_pwm_freq, server_ip, server_port):
         self.SERVER_IP = server_ip
         self.SERVER_PORT = server_port
-        self.motors_controller = MotorsController.MotorsController(21, 20, 23, 24, 1000)
+        #self.motors_controller = MotorsController.MotorsController(21, 20, 23, 24, 1000)
+        self.motors_controller = MotorsController.MotorsController(left_motor_forward_pin, left_motor_backward_pin, right_motor_forward_pin, right_motor_backward_pin, motors_pwm_freq)
         threading.Thread.__init__(self)
 
     def run(self):
