@@ -95,12 +95,13 @@ class StreamingClientApp(App):
         self.VIEW_FPS = view_fps
         self.VIEW_WIDTH = view_width
         self.VIEW_HEIGHT = view_height
+        self.SERVER_IP = server_ip
 
     def build(self):
         # 通信用設定をコンフィグファイルからロード
         config = configparser.ConfigParser()
         config.read('./connection.ini', 'UTF-8')
-        config_server_ip = config.get('server', 'ip')
+        config_server_ip = self.SERVER_IP
         config_server_port = int(config.get('server', 'port'))
         config_header_size = int(config.get('packet', 'header_size'))
         config_image_width = int(config.get('packet', 'image_width'))
@@ -126,4 +127,4 @@ class StreamingClientApp(App):
         self.stream_view.disconnect()
 
 if __name__ == '__main__':
-    StreamingClientApp(view_fps=30, view_width=800, view_height=600).run()
+    StreamingClientApp(view_fps=30, view_width=800, view_height=600, sys.argv[1]).run()
