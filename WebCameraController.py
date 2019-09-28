@@ -8,6 +8,7 @@ import configparser
 
 class WebCameraController(threading.Thread):
     def __init__(self, camera_id, camera_fps, camera_width, camera_height, server_ip, server_port, header_size, image_width, image_height, image_quality):
+        print("WebCameraController __init__")
         self.CAMERA_ID = camera_id
         self.CAMERA_FPS = camera_fps
         self.CAMERA_WIDTH = camera_width

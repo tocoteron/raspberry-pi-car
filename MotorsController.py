@@ -8,6 +8,7 @@ class MotorRotationDirection(Enum):
 
 class Motor:
     def __init__(self, forward_pin, backward_pin, pwm_freq):
+        print("Motor __init__")
         self.FORWARD_PIN = forward_pin
         self.BACKWARD_PIN = backward_pin
         self.PWM_FREQ = pwm_freq
@@ -20,7 +21,7 @@ class Motor:
         self.backward_pwm.start(0)
 
     def __del__(self):
-        print("Motor del")
+        print("Motor __del__")
         self.forward_pwm.stop()
         self.backward_pwm.stop()
 
@@ -38,11 +39,12 @@ class MotorSelection(Enum):
 
 class MotorsController:
     def __init__(self, left_motor_forward_pin, left_motor_backward_pin, right_motor_forward_pin, right_motor_backward_pin, motors_pwm_freq):
+        print("MotorsController __init__")
         self.left_motor = Motor(left_motor_forward_pin, left_motor_backward_pin, motors_pwm_freq)
         self.right_motor = Motor(right_motor_forward_pin, right_motor_backward_pin, motors_pwm_freq)
 
     def __del__(self):
-        print("MotorsController del")
+        print("MotorsController __del__")
         GPIO.cleanup()
 
     def change_motor_status(self, motor_selection, direction, speed):
@@ -54,3 +56,6 @@ class MotorsController:
     def change_motors_status(self, direction, speed):
         self.left_motor.change_status(direction, speed)
         self.right_motor.change_status(direction, speed)
+
+if __name__ == '__main__':
+    mc = MotorsController(21, 20, 23, 24, 1000)
