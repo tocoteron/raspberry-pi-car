@@ -127,4 +127,4 @@ class StreamingClientApp(App):
         self.stream_view.disconnect()
 
 if __name__ == '__main__':
-    StreamingClientApp(view_fps=30, view_width=800, view_height=600, sys.argv[1]).run()
+    StreamingClientApp(view_fps=30, view_width=800, view_height=600, server_ip=sys.argv[1]).run()
