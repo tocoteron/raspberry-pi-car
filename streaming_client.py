@@ -100,12 +100,12 @@ class StreamingClientApp(App):
     def build(self):
         # 通信用設定をコンフィグファイルからロード
         config = configparser.ConfigParser()
-        config.read('./web_camera.ini', 'UTF-8')
+        config.read('./settings.ini', 'UTF-8')
         config_server_ip = self.SERVER_IP
-        config_server_port = int(config.get('server', 'port'))
-        config_header_size = int(config.get('packet', 'header_size'))
-        config_image_width = int(config.get('packet', 'image_width'))
-        config_image_height = int(config.get('packet', 'image_height'))
+        config_server_port = int(config.get('web_camera', 'port'))
+        config_header_size = int(config.get('web_camera', 'header_size'))
+        config_image_width = int(config.get('web_camera', 'image_width'))
+        config_image_height = int(config.get('web_camera', 'image_height'))
 
         # ウィンドウサイズをビューサイズに合わせる
         Window.size = (self.VIEW_WIDTH, self.VIEW_HEIGHT)
