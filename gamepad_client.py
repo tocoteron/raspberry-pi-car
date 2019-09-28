@@ -1,8 +1,13 @@
+import sys
 import socket
 from inputs import get_gamepad
+import configparser
 
-host = "localhost"
-port = 8000
+config = configparser.ConfigParser()
+config.read('./settings.ini')
+
+host = sys.argv[1]
+port = int(config.get('gamepad', 'port'))
 
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client.connect((host, port))
