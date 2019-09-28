@@ -100,7 +100,7 @@ class StreamingClientApp(App):
     def build(self):
         # 通信用設定をコンフィグファイルからロード
         config = configparser.ConfigParser()
-        config.read('./connection.ini', 'UTF-8')
+        config.read('./web_camera.ini', 'UTF-8')
         config_server_ip = self.SERVER_IP
         config_server_port = int(config.get('server', 'port'))
         config_header_size = int(config.get('packet', 'header_size'))
