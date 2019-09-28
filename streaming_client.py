@@ -90,7 +90,7 @@ class StreamView(Image):
 
 class StreamingClientApp(App):
 
-    def __init__(self, view_fps, view_width, view_height, **kwargs):
+    def __init__(self, view_fps, view_width, view_height, server_ip, **kwargs):
         super(StreamingClientApp, self).__init__(**kwargs)
         self.VIEW_FPS = view_fps
         self.VIEW_WIDTH = view_width
