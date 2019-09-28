@@ -19,45 +19,66 @@ class GamepadController(threading.Thread):
         print("GamepadController __del__")
 
     def run(self):
-        serversock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        serversock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        serversock.bind((self.SERVER_IP, self.SERVER_PORT))
-        serversock.listen(1)
+        # ログ表示用インデント
+        INDENT = '    '
 
-        clientsock, client_address = serversock.accept()
+        # サーバーソケット生成
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_sock:
+            server_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            server_sock.bind((self.SERVER_IP, self.SERVER_PORT))
+            server_sock.listen(1)
 
-        x_vector = [1, 1]
-        motors_controller = MotorsController.MotorsController(self.LEFT_MOTOR_FORWARD_PIN, self.LEFT_MOTOR_BACKWARD_PIN, self.RIGHT_MOTOR_FORWARD_PIN, self.RIGHT_MOTOR_BACKWARD_PIN, self.MOTORS_PWM_FREQ)
+            # サーバ情報表示
+            print('GamepadController Server {')
+            print(INDENT + 'IP   : {},'.format(self.SERVER_IP))
+            print(INDENT + 'PORT : {}'.format(self.SERVER_PORT))
+            print('}')
 
-        while True:
-            receive_control = clientsock.recv(2048).decode('utf-8').split(' ')
+            # クライアント接続
+            client_sock, client_addr = server_sock.accept()
+            with client_sock:
 
-            print(receive_control)
+                # クライアント情報表示
+                print('GamepadController Client {')
+                print(INDENT + 'IP   : {},'.format(client_addr[0]))
+                print(INDENT + 'PORT : {}'.format(client_addr[1]))
+                print('}')
 
-            if len(receive_control[1]) != receive_control[1].find(',') + 1:
-                continue
+                # モーター制御用
+                x_vector = [1, 1]
+                motors_controller = MotorsController.MotorsController(self.LEFT_MOTOR_FORWARD_PIN, self.LEFT_MOTOR_BACKWARD_PIN, self.RIGHT_MOTOR_FORWARD_PIN, self.RIGHT_MOTOR_BACKWARD_PIN, self.MOTORS_PWM_FREQ)
 
-            command_type = receive_control[0]
-            command_val = int(receive_control[1].rstrip(','))
+                while True:
+                    # 操作情報取得
+                    receive_control = client_sock.recv(2048).decode('utf-8').split(' ')
 
-            print(command_type + ' ' + str(command_val))
+                    # 操作情報表示
+                    print('GamepadController Command {')
+                    print(INDENT + 'Type : {}'.format(receive_control[0]))
+                    print(INDENT + 'Value: {}'.format(receive_control[1]))
+                    print('}')
 
-            if command_type == 'ABS_Y':
-                if command_val >= 0:
-                    motors_controller.change_motor_status(MotorsController.MotorSelection.LEFT_MOTOR, MotorsController.MotorRotationDirection.FORWARD, x_vector[0] * command_val / 4.0)
-                    motors_controller.change_motor_status(MotorsController.MotorSelection.RIGHT_MOTOR, MotorsController.MotorRotationDirection.FORWARD, x_vector[1] * command_val / 4.0)
-                else:
-                    motors_controller.change_motor_status(MotorsController.MotorSelection.LEFT_MOTOR, MotorsController.MotorRotationDirection.BACKWARD, x_vector[0] * -command_val / 4.0)
-                    motors_controller.change_motor_status(MotorsController.MotorSelection.RIGHT_MOTOR, MotorsController.MotorRotationDirection.BACKWARD, x_vector[1] * -command_val / 4.0)
+                    # 複数のコマンドが連結されていた場合は操作を拒否
+                    if len(receive_control[1]) != receive_control[1].find(',') + 1:
+                        continue
 
-            if command_type == 'ABS_RX':
-                if command_val >= 0:
-                    x_vector = [1.0, 1.0 - command_val / 4.0]
-                else:
-                    x_vector = [1.0 + command_val / 4.0, 1.0]
+                    # 操作情報をもとにモーターを制御
+                    command_type = receive_control[0]
+                    command_val = int(receive_control[1].rstrip(','))
 
+                    if command_type == 'ABS_Y':
+                        if command_val >= 0:
+                            motors_controller.change_motor_status(MotorsController.MotorSelection.LEFT_MOTOR, MotorsController.MotorRotationDirection.FORWARD, x_vector[0] * command_val / 4.0)
+                            motors_controller.change_motor_status(MotorsController.MotorSelection.RIGHT_MOTOR, MotorsController.MotorRotationDirection.FORWARD, x_vector[1] * command_val / 4.0)
+                        else:
+                            motors_controller.change_motor_status(MotorsController.MotorSelection.LEFT_MOTOR, MotorsController.MotorRotationDirection.BACKWARD, x_vector[0] * -command_val / 4.0)
+                            motors_controller.change_motor_status(MotorsController.MotorSelection.RIGHT_MOTOR, MotorsController.MotorRotationDirection.BACKWARD, x_vector[1] * -command_val / 4.0)
 
-        serversock.close()
+                    if command_type == 'ABS_RX':
+                        if command_val >= 0:
+                            x_vector = [1.0, 1.0 - command_val / 4.0]
+                        else:
+                            x_vector = [1.0 + command_val / 4.0, 1.0]
 
 if __name__ == '__main__':
     gc = GamepadController(21, 20, 23, 24, 1000, "127.0.0.1", 8000)

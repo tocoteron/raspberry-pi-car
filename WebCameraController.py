@@ -34,7 +34,7 @@ class WebCameraController(threading.Thread):
         cam.set(cv2.CAP_PROP_FRAME_HEIGHT, self.CAMERA_HEIGHT)
 
         # カメラ情報表示
-        print('Camera {')
+        print('WebCameraController Camera {')
         print(INDENT + 'ID    : {},'.format(self.CAMERA_ID))
         print(INDENT + 'FORMAT: {},'.format(cam.get(cv2.CAP_PROP_FOURCC)))
         print(INDENT + 'FPS   : {},'.format(cam.get(cv2.CAP_PROP_FPS)))
@@ -43,45 +43,46 @@ class WebCameraController(threading.Thread):
         print('}')
 
         # サーバ情報表示
-        print('Server {')
+        print('WebCameraController Server {')
         print(INDENT + 'IP   : {},'.format(self.SERVER_IP))
         print(INDENT + 'PORT : {}'.format(self.SERVER_PORT))
         print('}')
 
-        # クライアントに接続
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.bind((self.SERVER_IP, self.SERVER_PORT))
-        s.listen(1)
-        soc, addr = s.accept()
+        # サーバーソケット生成
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_sock:
+            server_sock.bind((self.SERVER_IP, self.SERVER_PORT))
+            server_sock.listen(1)
 
-        # クライアント情報表示
-        print('Client {')
-        print(INDENT + 'IP   : {},'.format(addr[0]))
-        print(INDENT + 'PORT : {}'.format(addr[1]))
-        print('}')
+            # クライアント接続
+            client_sock, client_addr = server_sock.accept()
+            with client_sock:
 
-        # メインループ
-        while True:
-            loop_start_time = time.time()
+                # クライアント情報表示
+                print('WebCameraController Client {')
+                print(INDENT + 'IP   : {},'.format(client_addr[0]))
+                print(INDENT + 'PORT : {}'.format(client_addr[1]))
+                print('}')
 
-            # 送信用画像データ作成
-            flag, img = cam.read()
-            resized_img = cv2.resize(img, (self.IMAGE_WIDTH, self.IMAGE_HEIGHT))
-            (status, encoded_img) = cv2.imencode('.jpg', resized_img, [int(cv2.IMWRITE_JPEG_QUALITY), self.IMAGE_QUALITY])
+                # メインループ
+                while True:
+                    loop_start_time = time.time()
 
-            # パケット構築
-            packet_body = encoded_img.tostring()
-            packet_header = len(packet_body).to_bytes(self.HEADER_SIZE, 'big') 
-            packet = packet_header + packet_body
+                    # 送信用画像データ作成
+                    flag, img = cam.read()
+                    resized_img = cv2.resize(img, (self.IMAGE_WIDTH, self.IMAGE_HEIGHT))
+                    (status, encoded_img) = cv2.imencode('.jpg', resized_img, [int(cv2.IMWRITE_JPEG_QUALITY), self.IMAGE_QUALITY])
 
-            # パケット送信
-            try:
-                soc.sendall(packet)
-            except socket.error as e:
-                print('Connection closed.')
-                break
+                    # パケット構築
+                    packet_body = encoded_img.tostring()
+                    packet_header = len(packet_body).to_bytes(self.HEADER_SIZE, 'big') 
+                    packet = packet_header + packet_body
 
-            # FPS制御
-            time.sleep(max(0, 1 / FPS - (time.time() - loop_start_time)))
+                    # パケット送信
+                    try:
+                        client_sock.sendall(packet)
+                    except socket.error as e:
+                        print('WebCameraController connection closed.')
+                        break
 
-        s.close()
+                    # FPS制御
+                    time.sleep(max(0, 1 / FPS - (time.time() - loop_start_time)))
