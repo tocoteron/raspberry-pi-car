@@ -1,10 +1,10 @@
-# coding:utf-8
 import threading
 import socket
 import numpy as np
 import cv2
 import time
 import configparser
+import utility
 
 class WebCameraController(threading.Thread):
     def __init__(self, camera_id, camera_fps, camera_width, camera_height, server_ip, server_port, header_size, image_width, image_height, image_quality):
@@ -20,6 +20,9 @@ class WebCameraController(threading.Thread):
         self.IMAGE_HEIGHT = image_height
         self.IMAGE_QUALITY = image_quality
         threading.Thread.__init__(self)
+
+    def __del__(self):
+        print("WebCameraController __del__")
 
     def run(self):
         # 設定
@@ -86,3 +89,10 @@ class WebCameraController(threading.Thread):
 
                     # FPS制御
                     time.sleep(max(0, 1 / FPS - (time.time() - loop_start_time)))
+
+if __name__ == '__main__':
+    config = configparser.ConfigParser()
+    config.read('./settings.ini', 'UTF-8')
+    web_camera_controller = WebCameraController(0, 30, 1280, 720, utility.get_server_ip(), int(config.get('web_camera', 'port')), int(config.get('web_camera', 'header_size')), int(config.get('web_camera', 'image_width')), int(config.get('web_camera', 'image_height')), 30)
+    web_camera_controller.start()
+    web_camera_controller.join()

@@ -1,6 +1,7 @@
 import socket
 import utility
 import threading
+import configparser
 import MotorsController
 
 class GamepadController(threading.Thread):
@@ -81,5 +82,8 @@ class GamepadController(threading.Thread):
                             x_vector = [1.0 + command_val / 4.0, 1.0]
 
 if __name__ == '__main__':
-    gc = GamepadController(21, 20, 23, 24, 1000, "127.0.0.1", 8000)
+    config = configparser.ConfigParser()
+    config.read('./settings.ini', 'UTF-8')
+    gc = GamepadController(21, 20, 23, 24, 1000, utility.get_server_ip(), int(config.get('gamepad', 'port')))
     gc.start()
+    gc.join()
