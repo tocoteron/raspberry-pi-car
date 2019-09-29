@@ -84,6 +84,6 @@ class GamepadController(threading.Thread):
 if __name__ == '__main__':
     config = configparser.ConfigParser()
     config.read('./settings.ini', 'UTF-8')
-    gc = GamepadController(21, 20, 23, 24, 1000, utility.get_server_ip(), int(config.get('gamepad', 'port')))
-    gc.start()
-    gc.join()
+    gamepad_controller = GamepadController(21, 20, 23, 24, 1000, utility.get_server_ip(), int(config.get('gamepad', 'port')))
+    gamepad_controller.start()
+    gamepad_controller.join()

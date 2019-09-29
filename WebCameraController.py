@@ -83,7 +83,7 @@ class WebCameraController(threading.Thread):
                     # パケット送信
                     try:
                         client_sock.sendall(packet)
-                    except socket.error as e:
+                    except OSError as e:
                         print('WebCameraController connection closed.')
                         break
 
