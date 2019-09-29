@@ -22,10 +22,11 @@ class SoundController(threading.Thread):
         # ログ表示用インデント
         INDENT = '    '
 
+        audio = pyaudio.PyAudio()
+
         while True:
             try:
                 # オーディオストリーム生成
-                audio = pyaudio.PyAudio()
                 stream = audio.open(format=self.FORMAT, channels=self.CHANNELS, rate=self.RATE, output=True, frames_per_buffer=self.CHUNK)
 
                 # オーディオストリーム情報表示
@@ -59,15 +60,19 @@ class SoundController(threading.Thread):
 
                         while True:
                             data = client_sock.recv(self.CHUNK)
-                            if not data: break
+                            if not data:
+                                print('SoundController connection closed.')
+                                break
                             stream.write(data)
-
-                # オーディオストリーム破棄
-                stream.stop_stream()
-                stream.close()
-                audio.terminate()
             except:
-                pass
+                print('SoundController connection closed.')
+            
+            # オーディオストリーム破棄
+            stream.stop_stream()
+            stream.close()
+
+        audio.terminate()
+
 
 if __name__ == '__main__':
     config = configparser.ConfigParser()

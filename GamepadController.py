@@ -55,7 +55,9 @@ class GamepadController(threading.Thread):
                             # 操作情報取得
                             receive_control = client_sock.recv(2048).decode('utf-8').split(' ')
 
-                            if not receive_control: break
+                            if not receive_control:
+                                print('GamepadController connection closed.')
+                                break
 
                             # 操作情報表示
                             print('GamepadController Command {')
@@ -85,7 +87,7 @@ class GamepadController(threading.Thread):
                                 else:
                                     x_vector = [1.0 + command_val / 4.0, 1.0]
             except:
-                pass
+                print('GamepadController connection closed.')
 
 if __name__ == '__main__':
     config = configparser.ConfigParser()

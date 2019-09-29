@@ -92,7 +92,7 @@ class WebCameraController(threading.Thread):
                             # FPS制御
                             time.sleep(max(0, 1 / FPS - (time.time() - loop_start_time)))
             except:
-                pass
+                print('WebCameraController connection closed.')
 
 if __name__ == '__main__':
     config = configparser.ConfigParser()
