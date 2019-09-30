@@ -19,6 +19,8 @@ import pyaudio
 import wave
 import inputs
 
+sound_stream = None
+
 class SoundStream(threading.Thread):
     def __init__(self, wav_filename):
         config = configparser.ConfigParser()
@@ -30,6 +32,8 @@ class SoundStream(threading.Thread):
         self.RATE = int(config.get('sound', 'rate'))
         self.CHUNK = int(config.get('sound', 'chunk'))
         threading.Thread.__init__(self)
+        self.voice_volume = 0.0
+        self.music_volume = 1.0
         self.load_audio(wav_filename)
 
     def run(self):
@@ -56,7 +60,11 @@ class SoundStream(threading.Thread):
         decoded_data2 = np.frombuffer(data2, np.int16).copy()
         decoded_data1.resize(channels * chunk, refcheck=False)
         decoded_data2.resize(channels * chunk, refcheck=False)
-        return (decoded_data1 * 0.5 + decoded_data2 * 0.5).astype(np.int16).tobytes()
+        return (decoded_data1 * self.voice_volume + decoded_data2 * self.music_volume).astype(np.int16).tobytes()
+
+    def change_volumes(self, volume1, volume2):
+        self.voice_volume = volume1
+        self.music_volume = volume2
     
     def load_audio(self, wav_filename):
         self.wav_file = wave.open(wav_filename, 'rb')
@@ -72,6 +80,8 @@ class GamepadController(threading.Thread):
             threading.Thread.__init__(self)
 
         def run(self):
+            global sound_stream
+
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
                 sock.connect((self.SERVER_IP, self.SERVER_PORT))
 
@@ -85,7 +95,13 @@ class GamepadController(threading.Thread):
                         if  event.code in operable_list:
                             button_type = event.code
                             button_val = event.state
-                            
+
+                            if event.code == 'BTN_TR':
+                                if event.state == 0:
+                                    sound_stream.change_volumes(0.0, 1.0)
+                                elif event.state == 1:
+                                    sound_stream.change_volumes(1.0, 0.0)
+
                             if event.code in ['ABS_Y', 'ABS_RX']:
                                 button_val = int(max(event.state, -self.COORDINATE_MAX) / (self.COORDINATE_MAX / self.PARTITION_NUMBER))
                                 
@@ -209,6 +225,9 @@ class AudioListWidget(Widget):
         self.sound_stream = SoundStream(audio_list[0])
         self.sound_stream.setDaemon(True)
         self.sound_stream.start()
+
+        global sound_stream
+        sound_stream = self.sound_stream
     
     def audio_select(self, instance):
         print('The button <%s> is being pressed' % instance.text)
