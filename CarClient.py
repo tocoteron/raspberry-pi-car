@@ -17,6 +17,7 @@ import threading
 import glob
 import pyaudio
 import wave
+import inputs
 
 class SoundStream(threading.Thread):
     def __init__(self, wav_filename):
@@ -41,12 +42,9 @@ class SoundStream(threading.Thread):
             while True:
                 voice_data = stream.read(self.CHUNK)
                 music_data = self.wav_file.readframes(self.CHUNK)
-
-                # リピート処理
                 if music_data == b'':
                     self.wav_file.rewind()
                     music_data = self.wav_file.readframes(self.CHUNK)
-
                 sock.send(self.mix_sounds(voice_data, music_data, self.CHANNELS, self.CHUNK))
 
         stream.stop_stream()
@@ -63,35 +61,49 @@ class SoundStream(threading.Thread):
     def load_audio(self, wav_filename):
         self.wav_file = wave.open(wav_filename, 'rb')
 
+class GamepadController(threading.Thread):
+        def __init__(self):
+            config = configparser.ConfigParser()
+            config.read('./settings.ini')
+            self.SERVER_IP = App.get_running_app().SERVER_IP
+            self.SERVER_PORT = int(config.get('gamepad', 'port'))
+            self.COORDINATE_MAX = 32767
+            self.PARTITION_NUMBER = 4
+            threading.Thread.__init__(self)
+
+        def run(self):
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+                sock.connect((self.SERVER_IP, self.SERVER_PORT))
+
+                prev_y = 0
+                prev_x = 0
+                operable_list = ["ABS_Y", "ABS_RX", "BTN_NORTH", "BTN_WEST", "BTN_SOUTH", "BTN_EAST", "BTN_TR"]
+
+                while True:
+                    events = inputs.get_gamepad()
+                    for event in events:
+                        if  event.code in operable_list:
+                            button_type = event.code
+                            button_val = event.state
+                            
+                            if event.code in ['ABS_Y', 'ABS_RX']:
+                                button_val = int(max(event.state, -self.COORDINATE_MAX) / (self.COORDINATE_MAX / self.PARTITION_NUMBER))
+                                
+                                if event.code == 'ABS_Y':
+                                    if button_val == prev_y:
+                                        continue
+                                    prev_y = button_val
+                                
+                                if event.code == 'ABS_RX':
+                                    if button_val == prev_x:
+                                        continue
+                                    prev_x = button_val
+
+                            sock.send((button_type + ' ' + str(button_val) + ',').encode('utf-8'))
+
 class RootWidget(BoxLayout):
     def __init__(self, **kwargs):
         super(RootWidget, self).__init__(**kwargs)
-
-class AudioListWidget(Widget):
-    def __init__(self, **kwargs):
-        super(AudioListWidget, self).__init__(**kwargs)
-
-        layout = GridLayout(cols=1, spacing=0, size_hint_y=None)
-        layout.bind(minimum_height=layout.setter('height'))
-        audio_list = glob.glob("./*.wav")
-        for audio_filename in audio_list:
-            btn = Button(text=audio_filename, size_hint_y=None, height=40)
-            btn.bind(on_press=self.audio_select)
-            layout.add_widget(btn)
-
-        scroll_view = ScrollView(size_hint=(None, None), size=(200, Window.height))
-        scroll_view.add_widget(layout)
-        scroll_view.pos = (800, 0)
-        
-        self.add_widget(scroll_view)
-
-        self.sound_stream = SoundStream(audio_list[0])
-        self.sound_stream.setDaemon(True)
-        self.sound_stream.start()
-    
-    def audio_select(self, instance):
-        print('The button <%s> is being pressed' % instance.text)
-        self.sound_stream.load_audio(instance.text)
 
 class WebCameraWidget(Widget):
 
@@ -175,6 +187,40 @@ class WebCameraWidget(Widget):
         # サーバとの接続を切断
         self.soc.shutdown(socket.SHUT_RDWR)
         self.soc.close()
+
+class AudioListWidget(Widget):
+    def __init__(self, **kwargs):
+        super(AudioListWidget, self).__init__(**kwargs)
+
+        layout = GridLayout(cols=1, spacing=0, size_hint_y=None)
+        layout.bind(minimum_height=layout.setter('height'))
+        audio_list = glob.glob("./*.wav")
+        for audio_filename in audio_list:
+            btn = Button(text=audio_filename, size_hint_y=None, height=40)
+            btn.bind(on_press=self.audio_select)
+            layout.add_widget(btn)
+
+        scroll_view = ScrollView(size_hint=(None, None), size=(200, Window.height))
+        scroll_view.add_widget(layout)
+        scroll_view.pos = (800, 0)
+        
+        self.add_widget(scroll_view)
+
+        self.sound_stream = SoundStream(audio_list[0])
+        self.sound_stream.setDaemon(True)
+        self.sound_stream.start()
+    
+    def audio_select(self, instance):
+        print('The button <%s> is being pressed' % instance.text)
+        self.sound_stream.load_audio(instance.text)
+
+class GamepadWidget(Widget):
+    def __init__(self, **kwargs):
+        super(GamepadWidget, self).__init__(**kwargs)
+
+        self.gamepad_controller = GamepadController()
+        self.gamepad_controller.setDaemon(True)
+        self.gamepad_controller.start()
 
 class CarClientApp(App):
 
