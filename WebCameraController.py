@@ -7,7 +7,7 @@ import configparser
 import utility
 
 class WebCameraController(threading.Thread):
-    def __init__(self, camera_id, camera_fps, camera_width, camera_height, server_ip, server_port, header_size, image_width, image_height, image_quality):
+    def __init__(self, camera_id, camera_fps, camera_width, camera_height, server_ip, server_port, header_size, image_width, image_height, image_quality, transfer_fps):
         print("WebCameraController __init__")
         self.CAMERA_ID = int(camera_id)
         self.CAMERA_FPS = int(camera_fps)
@@ -18,6 +18,7 @@ class WebCameraController(threading.Thread):
         self.HEADER_SIZE = int(header_size)
         self.IMAGE_WIDTH = int(image_width)
         self.IMAGE_HEIGHT = int(image_height)
+        self.TRANSFER_FPS = int(transfer_fps)
         self.IMAGE_QUALITY = int(image_quality)
         threading.Thread.__init__(self)
 
@@ -26,7 +27,6 @@ class WebCameraController(threading.Thread):
 
     def run(self):
         # 設定
-        FPS = 30
         INDENT = '    '
 
         # カメラ設定適用
@@ -90,13 +90,13 @@ class WebCameraController(threading.Thread):
                                 break
 
                             # FPS制御
-                            time.sleep(max(0, 1 / FPS - (time.time() - loop_start_time)))
+                            time.sleep(max(0, 1 / self.TRANSFER_FPS - (time.time() - loop_start_time)))
             except:
                 print('WebCameraController connection closed.')
 
 if __name__ == '__main__':
     config = configparser.ConfigParser()
     config.read('./settings.ini', 'UTF-8')
-    web_camera_controller = WebCameraController(0, 30, 1280, 720, utility.get_server_ip(), config.get('web_camera', 'port'), config.get('web_camera', 'header_size'), config.get('web_camera', 'image_width'), config.get('web_camera', 'image_height'), 30)
+    web_camera_controller = WebCameraController(0, 30, 1280, 720, utility.get_server_ip(), config.get('web_camera', 'port'), config.get('web_camera', 'header_size'), config.get('web_camera', 'image_width'), config.get('web_camera', 'image_height'), 30, config.get('web_camera', 'transfer_fps'))
     web_camera_controller.start()
     web_camera_controller.join()
