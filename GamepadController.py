@@ -53,39 +53,42 @@ class GamepadController(threading.Thread):
 
                         while True:
                             # 操作情報取得
-                            receive_control = client_sock.recv(2048).decode('utf-8').split(' ')
+                            receive_controls = client_sock.recv(1024).decode('utf-8')
 
-                            if not receive_control:
+                            if not receive_controls:
                                 print('GamepadController connection closed.')
                                 break
 
-                            # 操作情報表示
-                            print('GamepadController Command {')
-                            print(INDENT + 'Type : {}'.format(receive_control[0]))
-                            print(INDENT + 'Value: {}'.format(receive_control[1]))
-                            print('}')
+                            for receive_control in receive_controls.split(','):
 
-                            # 複数のコマンドが連結されていた場合は操作を拒否
-                            if len(receive_control[1]) != receive_control[1].find(',') + 1:
-                                continue
+                                if receive_control == '':
+                                    continue
 
-                            # 操作情報をもとにモーターを制御
-                            command_type = receive_control[0]
-                            command_val = int(receive_control[1].rstrip(','))
+                                control_info = receive_control.split(' ')
 
-                            if command_type == 'ABS_Y':
-                                if command_val >= 0:
-                                    motors_controller.change_motor_status(MotorsController.MotorSelection.LEFT_MOTOR, MotorsController.MotorRotationDirection.FORWARD, x_vector[0] * command_val / 4.0)
-                                    motors_controller.change_motor_status(MotorsController.MotorSelection.RIGHT_MOTOR, MotorsController.MotorRotationDirection.FORWARD, x_vector[1] * command_val / 4.0)
-                                else:
-                                    motors_controller.change_motor_status(MotorsController.MotorSelection.LEFT_MOTOR, MotorsController.MotorRotationDirection.BACKWARD, x_vector[0] * -command_val / 4.0)
-                                    motors_controller.change_motor_status(MotorsController.MotorSelection.RIGHT_MOTOR, MotorsController.MotorRotationDirection.BACKWARD, x_vector[1] * -command_val / 4.0)
+                                # 操作情報表示
+                                print('GamepadController Command {')
+                                print(INDENT + 'Type : {}'.format(control_info[0]))
+                                print(INDENT + 'Value: {}'.format(control_info[1]))
+                                print('}')
 
-                            if command_type == 'ABS_RX':
-                                if command_val >= 0:
-                                    x_vector = [1.0, 1.0 - command_val / 4.0]
-                                else:
-                                    x_vector = [1.0 + command_val / 4.0, 1.0]
+                                # 操作情報をもとにモーターを制御
+                                command_type = control_info[0]
+                                command_val = int(control_info[1])
+
+                                if command_type == 'ABS_Y':
+                                    if command_val >= 0:
+                                        motors_controller.change_motor_status(MotorsController.MotorSelection.LEFT_MOTOR, MotorsController.MotorRotationDirection.FORWARD, x_vector[0] * command_val / 4.0)
+                                        motors_controller.change_motor_status(MotorsController.MotorSelection.RIGHT_MOTOR, MotorsController.MotorRotationDirection.FORWARD, x_vector[1] * command_val / 4.0)
+                                    else:
+                                        motors_controller.change_motor_status(MotorsController.MotorSelection.LEFT_MOTOR, MotorsController.MotorRotationDirection.BACKWARD, x_vector[0] * -command_val / 4.0)
+                                        motors_controller.change_motor_status(MotorsController.MotorSelection.RIGHT_MOTOR, MotorsController.MotorRotationDirection.BACKWARD, x_vector[1] * -command_val / 4.0)
+
+                                if command_type == 'ABS_RX':
+                                    if command_val >= 0:
+                                        x_vector = [1.0, 1.0 - command_val / 4.0]
+                                    else:
+                                        x_vector = [1.0 + command_val / 4.0, 1.0]
             except:
                 print('GamepadController connection closed.')
 
