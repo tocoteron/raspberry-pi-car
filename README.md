@@ -8,7 +8,7 @@ They need a Raspberry Pi Car(for a server), a client computer installed python, 
 ## What can do?
 
 They can:
-- see the video of the webcam
+- watch the video stream of the webcam
 - play sound mixed with a music file and your voice
 - control motors by gamepad controller
 
